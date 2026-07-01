@@ -1,0 +1,29 @@
+{
+  "name": "Anime Tracker Pro",
+  "short_name": "AnimeTracker",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f0f1a",
+  "theme_color": "#0f0f1a",
+  "description": "Track your anime watching progress with offline support",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "entertainment",
+    "productivity"
+  ],
+  "lang": "en",
+  "orientation": "portrait-primary"
+}

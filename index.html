@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f0f1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Anime Tracker">
+    <meta name="description" content="Track your anime watching progress">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Anime Tracker Pro</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Icons for PWA -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f1a;
+            --card-bg: #1a1a2e;
+            --card-bg-hover: #252545;
+            --text: #e0e0ff;
+            --text-dim: #8888aa;
+            --accent: #ff6b9d;
+            --accent2: #c084fc;
+            --accent3: #4facfe;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --info: #60a5fa;
+            --border: #2a2a4a;
+            --shadow: 0 4px 20px rgba(0,0,0,0.5);
+            --radius: 14px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(255,107,157,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(192,132,252,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(79,172,254,0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app { position: relative; z-index: 1; padding-bottom: 80px; }
+
+        .install-banner {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 9999;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .install-banner.show { transform: translateY(0); }
+        .install-banner span { font-weight: 600; font-size: 0.95rem; }
+        .install-banner .install-btn {
+            background: white;
+            color: var(--accent);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .install-banner .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 8px;
+            opacity: 0.8;
+        }
+
+        .offline-indicator {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: var(--warning);
+            color: #000;
+            text-align: center;
+            padding: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            z-index: 9998;
+            transform: translateY(-100%);
+            transition: transform 0.3s;
+        }
+        .offline-indicator.show { transform: translateY(0); }
+
+        .header {
+            background: rgba(15,15,26,0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo i { font-size: 1.6rem; }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            touch-action: manipulation;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,157,0.4); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--card-bg-hover); border-color: var(--accent2); }
+        .btn-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(34,197,94,0.4); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-info { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            padding: 16px 24px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 20px;
+            min-width: 140px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .stat-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+        .stat-card .number { font-size: 1.8rem; font-weight: 800; }
+        .stat-card .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .stat-card.total .number { color: var(--accent); }
+        .stat-card.watched .number { color: var(--success); }
+        .stat-card.watching .number { color: var(--accent3); }
+        .stat-card.plan .number { color: var(--warning); }
+        .stat-card.dropped .number { color: var(--danger); }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            padding: 0 24px 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .filter-group label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .filter-select, .search-input {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+            min-width: 160px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .filter-select:focus, .search-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(192,132,252,0.15); }
+        .search-input { min-width: 220px; }
+
+        .anime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            padding: 0 24px 24px;
+        }
+        .anime-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .anime-card:hover { border-color: var(--accent2); transform: translateY(-3px); box-shadow: var(--shadow); }
+        .anime-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .anime-card .anime-title {
+            font-size: 1rem;
+            font-weight: 700;
+            line-height: 1.4;
+            flex: 1;
+            word-break: break-word;
+        }
+        .anime-card .anime-img {
+            width: 60px;
+            height: 80px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #2a2a4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            text-align: center;
+            overflow: hidden;
+        }
+        .anime-card .anime-img img { width: 100%; height: 100%; border-radius: 8px; object-fit: cover; }
+        .anime-card .genres {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .genre-tag {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: rgba(192,132,252,0.15);
+            color: var(--accent2);
+            border: 1px solid rgba(192,132,252,0.3);
+            font-weight: 600;
+        }
+        .anime-card .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-watched { background: rgba(74,222,128,0.15); color: var(--success); border: 1px solid rgba(74,222,128,0.3); }
+        .status-watching { background: rgba(79,172,254,0.15); color: var(--accent3); border: 1px solid rgba(79,172,254,0.3); }
+        .status-plan { background: rgba(251,191,36,0.15); color: var(--warning); border: 1px solid rgba(251,191,36,0.3); }
+        .status-dropped { background: rgba(248,113,113,0.15); color: var(--danger); border: 1px solid rgba(248,113,113,0.3); }
+        .card-actions { display: flex; gap: 6px; }
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-dim);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            touch-action: manipulation;
+        }
+        .icon-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .icon-btn.edit:hover { background: var(--accent3); border-color: var(--accent3); }
+        .icon-btn.delete:hover { background: var(--danger); border-color: var(--danger); }
+        .rating-stars { display: flex; gap: 2px; margin-top: 6px; }
+        .rating-stars .star { color: #444; cursor: pointer; font-size: 0.9rem; transition: color 0.15s; }
+        .rating-stars .star.filled { color: #fbbf24; }
+        .rating-stars .star:hover { color: #fbbf24; }
+
+        .empty-state { text-align: center; padding: 80px 20px; color: var(--text-dim); }
+        .empty-state i { font-size: 4rem; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h2 { font-size: 1.5rem; margin-bottom: 8px; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            transform: scale(0.95);
+            transition: transform 0.3s;
+            -webkit-overflow-scrolling: touch;
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 { font-size: 1.3rem; }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.3rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--accent2);
+            box-shadow: 0 0 0 3px rgba(192,132,252,0.15);
+        }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .progress-container { margin: 16px 0; display: none; }
+        .progress-container.active { display: block; }
+        .progress-bar-bg { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 4px; transition: width 0.3s; width: 0%; }
+        .progress-text { font-size: 0.8rem; color: var(--text-dim); margin-top: 6px; text-align: center; }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 90vw;
+        }
+        .toast {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+            min-width: 280px;
+            max-width: 100%;
+        }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.info { border-left: 4px solid var(--info); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 1; } }
+
+        .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .bulk-select { position: absolute; top: 12px; left: 12px; z-index: 5; }
+        .bulk-select input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+        .bulk-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 90;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+        .bulk-bar.active { transform: translateY(0); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent2); }
+
+        @media (max-width: 768px) {
+            .anime-grid { grid-template-columns: 1fr; padding: 0 12px 24px; }
+            .header { padding: 12px 16px; }
+            .stats-bar { padding: 12px 16px; }
+            .filters { padding: 0 16px 12px; }
+            .form-row { grid-template-columns: 1fr; }
+            .toast-container { right: 12px; bottom: 80px; }
+            .install-banner { padding: 10px 16px; }
+            .install-banner span { font-size: 0.85rem; }
+        }
+
+        .genre-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 24px 12px;
+        }
+        .genre-pill {
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-dim);
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .genre-pill:hover { border-color: var(--accent2); color: var(--text); }
+        .genre-pill.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; border-color: transparent; }
+
+        .anime-meta { display: flex; gap: 12px; font-size: 0.78rem; color: var(--text-dim); margin-top: 6px; flex-wrap: wrap; }
+        .anime-meta span { display: flex; align-items: center; gap: 4px; }
+        .score-badge { background: rgba(251,191,36,0.15); color: var(--warning); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-left: auto; }
+        .sort-options { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .sort-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--card-bg);
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .sort-btn:hover, .sort-btn.active { border-color: var(--accent2); color: var(--text); }
+    </style>
+</head>
+<body>
+    <div class="install-banner" id="installBanner">
+        <span><i class="fas fa-download"></i> Install Anime Tracker as an app</span>
+        <div>
+            <button class="install-btn" id="installBtn">Install</button>
+            <button class="close-btn" onclick="hideInstallBanner()"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <div class="offline-indicator" id="offlineIndicator">
+        <i class="fas fa-wifi"></i> You are offline — data is saved locally
+    </div>
+
+    <div class="app">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-tv"></i>
+                Anime Tracker Pro
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal('addModal')">
+                    <i class="fas fa-plus"></i> Add Anime
+                </button>
+                <button class="btn btn-success" onclick="openModal('bulkModal')">
+                    <i class="fas fa-list"></i> Bulk Add
+                </button>
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">
+                    <i class="fas fa-upload"></i> Import
+                </button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+                <button class="btn btn-danger" onclick="clearAll()">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+        </header>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card total"><div class="number" id="statTotal">0</div><div class="label">Total</div></div>
+            <div class="stat-card watched"><div class="number" id="statWatched">0</div><div class="label">Watched</div></div>
+            <div class="stat-card watching"><div class="number" id="statWatching">0</div><div class="label">Watching</div></div>
+            <div class="stat-card plan"><div class="number" id="statPlan">0</div><div class="label">Plan to Watch</div></div>
+            <div class="stat-card dropped"><div class="number" id="statDropped">0</div><div class="label">Dropped</div></div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>Status</label>
+                <select class="filter-select" id="statusFilter" onchange="renderList()">
+                    <option value="all">All Status</option>
+                    <option value="watched">Watched</option>
+                    <option value="watching">Watching</option>
+                    <option value="plan">Plan to Watch</option>
+                    <option value="dropped">Dropped</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Search</label>
+                <input type="text" class="search-input" id="searchFilter" placeholder="Search anime..." oninput="renderList()">
+            </div>
+            <div class="filter-group">
+                <label>Sort</label>
+                <div class="sort-options">
+                    <button class="sort-btn active" onclick="setSort('added')" id="sortAdded">Added</button>
+                    <button class="sort-btn" onclick="setSort('name')" id="sortName">Name</button>
+                    <button class="sort-btn" onclick="setSort('rating')" id="sortRating">Rating</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="genre-pills" id="genrePills"></div>
+        <div class="anime-grid" id="animeGrid"></div>
+
+        <div class="empty-state" id="emptyState" style="display:none">
+            <i class="fas fa-film"></i>
+            <h2>No anime found</h2>
+            <p>Add some anime to get started!</p>
+        </div>
+    </div>
+
+    <div class="bulk-bar" id="bulkBar">
+        <span id="bulkCount">0 selected</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="bulkChangeStatus('watched')">Mark Watched</button>
+            <button class="btn btn-secondary" onclick="bulkChangeStatus('watching')">Mark Watching</button>
+            <button class="btn btn-secondary" onclick="bulkChangeStatus('plan')">Mark Plan</button>
+            <button class="btn btn-danger" onclick="bulkDelete()">Delete</button>
+            <button class="btn btn-secondary" onclick="clearSelection()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus-circle"></i> Add Anime</h2>
+                <button class="modal-close" onclick="closeModal('addModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Anime Name</label>
+                <input type="text" id="addName" placeholder="Enter anime name...">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="addStatus">
+                        <option value="watched">Watched</option>
+                        <option value="watching">Watching</option>
+                        <option value="plan">Plan to Watch</option>
+                        <option value="dropped">Dropped</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Rating (1-10)</label>
+                    <input type="number" id="addRating" min="1" max="10" placeholder="Optional">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="addNotes" placeholder="Optional notes..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="addSingle()">
+                <i class="fas fa-plus"></i> Add Anime
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="bulkModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-list-ul"></i> Bulk Add Anime</h2>
+                <button class="modal-close" onclick="closeModal('bulkModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="form-group">
+                <label>Paste Anime Names (one per line)</label>
+                <textarea id="bulkNames" placeholder="Attack on Titan
+Death Note
+One Piece
+Naruto
+..."></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="bulkStatus">
+                        <option value="plan">Plan to Watch</option>
+                        <option value="watched">Watched</option>
+                        <option value="watching">Watching</option>
+                        <option value="dropped">Dropped</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Auto-Fetch Genres</label>
+                    <select id="bulkAutoFetch">
+                        <option value="yes">Yes (from MyAnimeList)</option>
+                        <option value="no">No (manual only)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="progress-container" id="bulkProgress">
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="bulkProgressFill"></div></div>
+                <div class="progress-text" id="bulkProgressText">0 / 0</div>
+            </div>
+            <button class="btn btn-success" style="width:100%" id="bulkAddBtn" onclick="addBulk()">
+                <i class="fas fa-plus"></i> Add All Anime
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Edit Anime</h2>
+                <button class="modal-close" onclick="closeModal('editModal')"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="editId">
+            <div class="form-group">
+                <label>Anime Name</label>
+                <input type="text" id="editName">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="editStatus">
+                        <option value="watched">Watched</option>
+                        <option value="watching">Watching</option>
+                        <option value="plan">Plan to Watch</option>
+                        <option value="dropped">Dropped</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Rating (1-10)</label>
+                    <input type="number" id="editRating" min="1" max="10">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Genres (comma separated)</label>
+                <input type="text" id="editGenres" placeholder="Action, Adventure, Fantasy...">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea id="editNotes"></textarea>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="saveEdit()">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const STORAGE_KEY = 'animeTrackerData_v2';
+        let animeList = [];
+        let selectedIds = new Set();
+        let currentSort = 'added';
+        let currentGenreFilter = 'all';
+        let deferredPrompt = null;
+        let storageAvailable = false;
+
+        const ALL_GENRES = [
+            'Action','Adventure','Comedy','Drama','Fantasy','Horror',
+            'Mahou Shoujo','Mecha','Music','Mystery','Psychological',
+            'Romance','Sci-Fi','Slice of Life','Sports','Supernatural',
+            'Thriller','Ecchi','Harem','Isekai','Military','School',
+            'Shounen','Seinen','Shoujo','Josei','Demons','Historical',
+            'Magic','Martial Arts','Parody','Police','Space','Super Power',
+            'Vampire','Game','Kids','Cars','Dementia','Hentai'
+        ];
+
+        function checkStorage() {
+            try {
+                const test = '__storage_test__';
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                storageAvailable = true;
+                return true;
+            } catch (e) {
+                storageAvailable = false;
+                console.warn('localStorage not available:', e);
+                return false;
+            }
+        }
+
+        function loadData() {
+            if (checkStorage()) {
+                try {
+                    const stored = localStorage.getItem(STORAGE_KEY);
+                    if (stored) {
+                        animeList = JSON.parse(stored);
+                        if (!Array.isArray(animeList)) animeList = [];
+                    }
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                    animeList = [];
+                }
+            } else {
+                loadFromIndexedDB();
+            }
+        }
+
+        function saveData() {
+            if (storageAvailable) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(animeList));
+                } catch (e) {
+                    console.error('Error saving to localStorage:', e);
+                    if (e.name === 'QuotaExceededError') {
+                        showToast('Storage full! Export your data to free up space.', 'error');
+                    }
+                }
+            } else {
+                saveToIndexedDB();
+            }
+        }
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('AnimeTrackerDB', 1);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('anime')) {
+                        db.createObjectStore('anime', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        async function saveToIndexedDB() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction('anime', 'readwrite');
+                const store = tx.objectStore('anime');
+                await new Promise((resolve, reject) => {
+                    const clearReq = store.clear();
+                    clearReq.onsuccess = () => {
+                        animeList.forEach(item => store.put(item));
+                        resolve();
+                    };
+                    clearReq.onerror = () => reject(clearReq.error);
+                });
+            } catch (e) {
+                console.error('IndexedDB save failed:', e);
+            }
+        }
+
+        async function loadFromIndexedDB() {
+            try {
+                const db = await openDB();
+                const tx = db.transaction('anime', 'readonly');
+                const store = tx.objectStore('anime');
+                const request = store.getAll();
+                request.onsuccess = () => {
+                    animeList = request.result || [];
+                    renderList();
+                    updateStats();
+                    renderGenrePills();
+                };
+            } catch (e) {
+                console.error('IndexedDB load failed:', e);
+                animeList = [];
+            }
+        }
+
+        function initPWA() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showInstallBanner();
+            });
+
+            window.addEventListener('appinstalled', () => {
+                deferredPrompt = null;
+                hideInstallBanner();
+                showToast('Anime Tracker installed successfully!', 'success');
+            });
+
+            if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+                console.log('Running in standalone mode');
+            }
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            }
+
+            window.addEventListener('online', () => {
+                document.getElementById('offlineIndicator').classList.remove('show');
+                showToast('Back online!', 'success');
+            });
+            window.addEventListener('offline', () => {
+                document.getElementById('offlineIndicator').classList.add('show');
+            });
+            if (!navigator.onLine) {
+                document.getElementById('offlineIndicator').classList.add('show');
+            }
+        }
+
+        function showInstallBanner() {
+            if (deferredPrompt) {
+                document.getElementById('installBanner').classList.add('show');
+            }
+        }
+
+        function hideInstallBanner() {
+            document.getElementById('installBanner').classList.remove('show');
+        }
+
+        document.getElementById('installBtn').addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                showToast('Installing...', 'success');
+            }
+            deferredPrompt = null;
+            hideInstallBanner();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            initPWA();
+            renderList();
+            renderGenrePills();
+            updateStats();
+            if (!storageAvailable && !('indexedDB' in window)) {
+                showToast('Warning: Data may not persist. Export regularly!', 'error');
+            }
+        });
+
+        function updateStats() {
+            document.getElementById('statTotal').textContent = animeList.length;
+            document.getElementById('statWatched').textContent = animeList.filter(a => a.status === 'watched').length;
+            document.getElementById('statWatching').textContent = animeList.filter(a => a.status === 'watching').length;
+            document.getElementById('statPlan').textContent = animeList.filter(a => a.status === 'plan').length;
+            document.getElementById('statDropped').textContent = animeList.filter(a => a.status === 'dropped').length;
+        }
+
+        function renderList() {
+            const grid = document.getElementById('animeGrid');
+            const empty = document.getElementById('emptyState');
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase().trim();
+
+            let filtered = [...animeList];
+
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(a => a.status === statusFilter);
+            }
+            if (currentGenreFilter !== 'all') {
+                filtered = filtered.filter(a => {
+                    if (!a.genres || a.genres.length === 0) return false;
+                    return a.genres.some(g => g.toLowerCase() === currentGenreFilter.toLowerCase());
+                });
+            }
+            if (searchFilter) {
+                filtered = filtered.filter(a =>
+                    a.name.toLowerCase().includes(searchFilter) ||
+                    (a.genres && a.genres.some(g => g.toLowerCase().includes(searchFilter)))
+                );
+            }
+            if (currentSort === 'name') {
+                filtered.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (currentSort === 'rating') {
+                filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+            } else {
+                filtered.sort((a, b) => a.addedAt - b.addedAt);
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            grid.innerHTML = filtered.map(anime => {
+                const statusLabels = { watched: 'Watched', watching: 'Watching', plan: 'Plan to Watch', dropped: 'Dropped' };
+                const statusClass = `status-${anime.status}`;
+                const imgHtml = anime.image
+                    ? `<img src="${anime.image}" alt="${escapeHtml(anime.name)}" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>'">`
+                    : `<i class="fas fa-image"></i>`;
+                const genreTags = (anime.genres || []).map(g => `<span class="genre-tag">${escapeHtml(g)}</span>`).join('');
+                const stars = renderStars(anime.id, anime.rating || 0);
+                const scoreBadge = anime.rating ? `<span class="score-badge">${anime.rating}/10</span>` : '';
+                const isSelected = selectedIds.has(anime.id);
+                const notesHtml = anime.notes ? `<div style="font-size:0.8rem;color:var(--text-dim);margin:8px 0;font-style:italic;"><i class="fas fa-sticky-note"></i> ${escapeHtml(anime.notes)}</div>` : '';
+
+                return `<div class="anime-card" data-id="${anime.id}">
+                    <div class="bulk-select">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelect('${anime.id}')">
+                    </div>
+                    <div class="card-header">
+                        <div style="flex:1; padding-left: 28px;">
+                            <div class="anime-title">${escapeHtml(anime.name)} ${scoreBadge}</div>
+                            <div class="anime-meta">
+                                <span><i class="fas fa-calendar"></i> ${anime.year || 'N/A'}</span>
+                                <span><i class="fas fa-tv"></i> ${anime.episodes || '?'} eps</span>
+                                <span><i class="fas fa-star"></i> MAL: ${anime.malScore || 'N/A'}</span>
+                            </div>
+                            <div class="rating-stars" onclick="event.stopPropagation()">${stars}</div>
+                        </div>
+                        <div class="anime-img">${imgHtml}</div>
+                    </div>
+                    <div class="genres">${genreTags}</div>
+                    ${notesHtml}
+                    <div class="card-footer">
+                        <span class="status-badge ${statusClass}">${statusLabels[anime.status]}</span>
+                        <div class="card-actions">
+                            <button class="icon-btn edit" onclick="openEdit('${anime.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+                            <button class="icon-btn" onclick="fetchGenresForOne('${anime.id}')" title="Refresh Genres"><i class="fas fa-sync"></i></button>
+                            <button class="icon-btn delete" onclick="deleteAnime('${anime.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderStars(id, rating) {
+            let html = '';
+            for (let i = 1; i <= 10; i++) {
+                const filled = i <= rating ? 'filled' : '';
+                html += `<span class="star ${filled}" onclick="rateAnime('${id}', ${i})" title="${i} star${i>1?'s':''}"><i class="fas fa-star"></i></span>`;
+            }
+            return html;
+        }
+
+        function renderGenrePills() {
+            const container = document.getElementById('genrePills');
+            const allGenres = new Set();
+            animeList.forEach(a => { if (a.genres) a.genres.forEach(g => allGenres.add(g)); });
+            const sortedGenres = Array.from(allGenres).sort();
+            let html = `<button class="genre-pill ${currentGenreFilter === 'all' ? 'active' : ''}" onclick="filterGenre('all')">All Genres</button>`;
+            sortedGenres.forEach(g => {
+                html += `<button class="genre-pill ${currentGenreFilter === g ? 'active' : ''}" onclick="filterGenre('${escapeHtml(g)}')">${escapeHtml(g)}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function filterGenre(genre) {
+            currentGenreFilter = genre;
+            renderGenrePills();
+            renderList();
+        }
+
+        function setSort(type) {
+            currentSort = type;
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('sort' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+            renderList();
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            document.body.style.overflow = '';
+            if (id === 'bulkModal') {
+                document.getElementById('bulkNames').value = '';
+                document.getElementById('bulkProgress').classList.remove('active');
+                document.getElementById('bulkAddBtn').disabled = false;
+                document.getElementById('bulkAddBtn').innerHTML = '<i class="fas fa-plus"></i> Add All Anime';
+            }
+            if (id === 'addModal') {
+                document.getElementById('addName').value = '';
+                document.getElementById('addRating').value = '';
+                document.getElementById('addNotes').value = '';
+            }
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(overlay.id); });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(m => closeModal(m.id));
+            }
+        });
+
+        async function addSingle() {
+            const name = document.getElementById('addName').value.trim();
+            if (!name) { showToast('Please enter an anime name', 'error'); return; }
+            const status = document.getElementById('addStatus').value;
+            const rating = parseInt(document.getElementById('addRating').value) || 0;
+            const notes = document.getElementById('addNotes').value.trim();
+
+            const anime = {
+                id: 'anime_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                name: name, status: status, rating: rating, notes: notes,
+                genres: [], image: '', year: '', episodes: '', malScore: '', addedAt: Date.now()
+            };
+
+            showToast('Fetching info from MyAnimeList...', 'info');
+            const info = await fetchAnimeInfo(name);
+            if (info) {
+                anime.genres = info.genres || [];
+                anime.image = info.image || '';
+                anime.year = info.year || '';
+                anime.episodes = info.episodes || '';
+                anime.malScore = info.malScore || '';
+            }
+
+            animeList.push(anime);
+            saveData();
+            renderList();
+            renderGenrePills();
+            updateStats();
+            closeModal('addModal');
+            showToast(`"${name}" added successfully!`, 'success');
+        }
+
+        async function addBulk() {
+            const raw = document.getElementById('bulkNames').value.trim();
+            if (!raw) { showToast('Please paste some anime names', 'error'); return; }
+            const names = raw.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            if (names.length === 0) { showToast('No valid names found', 'error'); return; }
+            const status = document.getElementById('bulkStatus').value;
+            const autoFetch = document.getElementById('bulkAutoFetch').value === 'yes';
+
+            const btn = document.getElementById('bulkAddBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Adding...';
+            const progress = document.getElementById('bulkProgress');
+            const fill = document.getElementById('bulkProgressFill');
+            const text = document.getElementById('bulkProgressText');
+            progress.classList.add('active');
+
+            let added = 0;
+            for (let i = 0; i < names.length; i++) {
+                const name = names[i];
+                if (animeList.find(a => a.name.toLowerCase() === name.toLowerCase())) {
+                    text.textContent = `Skipped (duplicate): ${name}`;
+                    fill.style.width = `${((i + 1) / names.length) * 100}%`;
+                    continue;
+                }
+                const anime = {
+                    id: 'anime_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    name, status, rating: 0, notes: '',
+                    genres: [], image: '', year: '', episodes: '', malScore: '', addedAt: Date.now() + i
+                };
+                if (autoFetch) {
+                    text.textContent = `Fetching: ${name} (${i + 1}/${names.length})`;
+                    const info = await fetchAnimeInfo(name);
+                    if (info) {
+                        anime.genres = info.genres || [];
+                        anime.image = info.image || '';
+                        anime.year = info.year || '';
+                        anime.episodes = info.episodes || '';
+                        anime.malScore = info.malScore || '';
+                    }
+                    await delay(400);
+                } else {
+                    text.textContent = `Adding: ${name} (${i + 1}/${names.length})`;
+                }
+                animeList.push(anime);
+                added++;
+                fill.style.width = `${((i + 1) / names.length) * 100}%`;
+                text.textContent = `${i + 1} / ${names.length} — ${name}`;
+            }
+
+            saveData();
+            renderList();
+            renderGenrePills();
+            updateStats();
+            showToast(`Added ${added} anime!`, 'success');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus"></i> Add All Anime';
+            progress.classList.remove('active');
+            fill.style.width = '0%';
+            closeModal('bulkModal');
+        }
+
+        function openEdit(id) {
+            const anime = animeList.find(a => a.id === id);
+            if (!anime) return;
+            document.getElementById('editId').value = anime.id;
+            document.getElementById('editName').value = anime.name;
+            document.getElementById('editStatus').value = anime.status;
+            document.getElementById('editRating').value = anime.rating || '';
+            document.getElementById('editGenres').value = (anime.genres || []).join(', ');
+            document.getElementById('editNotes').value = anime.notes || '';
+            openModal('editModal');
+        }
+
+        function saveEdit() {
+            const id = document.getElementById('editId').value;
+            const idx = animeList.findIndex(a => a.id === id);
+            if (idx === -1) return;
+            animeList[idx].name = document.getElementById('editName').value.trim();
+            animeList[idx].status = document.getElementById('editStatus').value;
+            animeList[idx].rating = parseInt(document.getElementById('editRating').value) || 0;
+            animeList[idx].genres = document.getElementById('editGenres').value.split(',').map(g => g.trim()).filter(g => g);
+            animeList[idx].notes = document.getElementById('editNotes').value.trim();
+            saveData();
+            renderList();
+            renderGenrePills();
+            updateStats();
+            closeModal('editModal');
+            showToast('Anime updated!', 'success');
+        }
+
+        function deleteAnime(id) {
+            if (!confirm('Delete this anime?')) return;
+            animeList = animeList.filter(a => a.id !== id);
+            selectedIds.delete(id);
+            saveData();
+            renderList();
+            renderGenrePills();
+            updateStats();
+            showToast('Anime deleted', 'info');
+        }
+
+        function clearAll() {
+            if (!confirm('Delete ALL anime from your list? This cannot be undone.')) return;
+            animeList = [];
+            selectedIds.clear();
+            saveData();
+            renderList();
+            renderGenrePills();
+            updateStats();
+            showToast('List cleared', 'info');
+        }
+
+        function rateAnime(id, rating) {
+            const anime = animeList.find(a => a.id === id);
+            if (!anime) return;
+            anime.rating = anime.rating === rating ? 0 : rating;
+            saveData();
+            renderList();
+        }
+
+        function toggleSelect(id) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            updateBulkBar();
+        }
+
+        function clearSelection() {
+            selectedIds.clear();
+            updateBulkBar();
+            renderList();
+        }
+
+        function updateBulkBar() {
+            const bar = document.getElementById('bulkBar');
+            const count = document.getElementById('bulkCount');
+            if (selectedIds.size > 0) {
+                bar.classList.add('active');
+                count.textContent = `${selectedIds.size} selected`;
+            } else {
+                bar.classList.remove('active');
+            }
+            renderList();
+        }
+
+        function bulkChangeStatus(status) {
+            const count = selectedIds.size;
+            selectedIds.forEach(id => {
+                const anime = animeList.find(a => a.id === id);
+                if (anime) anime.status = status;
+            });
+            saveData();
+            clearSelection();
+            showToast(`Updated ${count} anime`, 'success');
+            updateStats();
+        }
+
+        function bulkDelete() {
+            const count = selectedIds.size;
+            if (!confirm(`Delete ${count} selected anime?`)) return;
+            animeList = animeList.filter(a => !selectedIds.has(a.id));
+            selectedIds.clear();
+            saveData();
+            renderList();
+            renderGenrePills();
+            updateStats();
+            document.getElementById('bulkBar').classList.remove('active');
+            showToast('Selected anime deleted', 'info');
+        }
+
+        function exportData() {
+            const blob = new Blob([JSON.stringify(animeList, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'anime-tracker-export-' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Exported successfully!', 'success');
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error('Invalid format');
+                    const existing = new Set(animeList.map(a => a.name.toLowerCase()));
+                    let added = 0;
+                    let skipped = 0;
+                    data.forEach(item => {
+                        if (!existing.has(item.name.toLowerCase())) {
+                            if (!item.id) item.id = 'anime_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                            if (!item.addedAt) item.addedAt = Date.now();
+                            animeList.push(item);
+                            added++;
+                        } else {
+                            skipped++;
+                        }
+                    });
+                    saveData();
+                    renderList();
+                    renderGenrePills();
+                    updateStats();
+                    showToast(`Imported ${added} new anime! ${skipped > 0 ? '(' + skipped + ' skipped)' : ''}`, 'success');
+                } catch (err) {
+                    showToast('Invalid JSON file: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        async function fetchAnimeInfo(name) {
+            try {
+                const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(name)}&limit=1`);
+                if (!res.ok) return null;
+                const data = await res.json();
+                if (!data.data || data.data.length === 0) return null;
+                const anime = data.data[0];
+                return {
+                    genres: anime.genres ? anime.genres.map(g => g.name) : [],
+                    image: anime.images?.jpg?.image_url || '',
+                    year: anime.year || anime.aired?.prop?.from?.year || '',
+                    episodes: anime.episodes || '',
+                    malScore: anime.score || ''
+                };
+            } catch {
+                return null;
+            }
+        }
+
+        async function fetchGenresForOne(id) {
+            const anime = animeList.find(a => a.id === id);
+            if (!anime) return;
+            showToast(`Refreshing info for "${anime.name}"...`, 'info');
+            const info = await fetchAnimeInfo(anime.name);
+            if (info) {
+                anime.genres = info.genres || anime.genres;
+                anime.image = info.image || anime.image;
+                anime.year = info.year || anime.year;
+                anime.episodes = info.episodes || anime.episodes;
+                anime.malScore = info.malScore || anime.malScore;
+                saveData();
+                renderList();
+                renderGenrePills();
+                showToast('Info refreshed!', 'success');
+            } else {
+                showToast('Could not fetch info', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
+            const colorVar = type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info';
+            toast.innerHTML = `<i class="fas ${icons[type] || icons.info}" style="color:var(--${colorVar});font-size:1.1rem;flex-shrink:0;"></i> <span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
